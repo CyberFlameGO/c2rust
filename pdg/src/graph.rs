@@ -167,7 +167,7 @@ impl Debug for Graphs {
 
 impl Display for NodeId {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "n{}", self.as_usize())
+        write!(f, "n[{}]", self.as_usize())
     }
 }
 
@@ -226,7 +226,7 @@ impl Node {
         let fn_ = function;
         write!(
             f,
-            "{kind}{sep}{src}{sep}=>{sep}{dest}{sep}@{sep}{bb_stmt}:{sep}{fn_}"
+            "{kind}{sep}{src}{sep}=>{sep}{dest}{sep}@{sep}{bb_stmt}:{sep}fn {fn_};"
         )
     }
 }
@@ -254,7 +254,7 @@ impl Display for Node {
 
 impl Display for GraphId {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "g{}", self.as_usize())
+        write!(f, "g[{}]", self.as_usize())
     }
 }
 
