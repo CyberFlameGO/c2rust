@@ -10,6 +10,7 @@ use std::{
     fmt::{self, Debug, Formatter},
 };
 
+use crate::util::pad_columns;
 use crate::util::ShortOption;
 
 newtype_index!(
@@ -166,7 +167,7 @@ impl Debug for Graphs {
 
 impl Display for NodeId {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "node {}", self.as_usize())
+        write!(f, "n{}", self.as_usize())
     }
 }
 
@@ -191,8 +192,23 @@ impl Display for NodeKind {
     }
 }
 
-impl Display for Node {
+struct BlockStatement<'a> {
+    block: &'a BasicBlock,
+    statement_idx: &'a usize,
+}
+
+impl Display for BlockStatement<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        let Self {
+            block: bb,
+            statement_idx: stmt,
+        } = self;
+        write!(f, "{bb:?}[{stmt}]")
+    }
+}
+
+impl Node {
+    fn fmt_with_sep(&self, f: &mut Formatter<'_>, sep: char) -> fmt::Result {
         let Self {
             function,
             block,
@@ -203,24 +219,63 @@ impl Display for Node {
         } = self;
         let src = ShortOption(source.as_ref());
         let dest = ShortOption(dest.as_ref());
-        let bb = block;
-        let stmt = statement_idx;
+        let bb_stmt = BlockStatement {
+            block,
+            statement_idx,
+        };
         let fn_ = function;
-        write!(f, "(fn {fn_} @ {bb:?}[{stmt}]) {kind} {src} => {dest}")
+        write!(
+            f,
+            "{kind}{sep}{src}{sep}=>{sep}{dest}{sep}@{sep}{bb_stmt}:{sep}{fn_}"
+        )
+    }
+}
+
+struct DisplayNode<'a> {
+    id: NodeId,
+    node: &'a Node,
+    sep: char,
+}
+
+impl Display for DisplayNode<'_> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        let Self { id, node, sep } = *self;
+        write!(f, "{id}:{sep}")?;
+        node.fmt_with_sep(f, sep)?;
+        Ok(())
+    }
+}
+
+impl Display for Node {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        self.fmt_with_sep(f, ' ')
     }
 }
 
 impl Display for GraphId {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "graph {}", self.as_usize())
+        write!(f, "g{}", self.as_usize())
     }
 }
 
 impl Display for Graph {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        let sep = '|';
+        let lines = self
+            .nodes
+            .iter_enumerated()
+            .map(|(node_id, node)| {
+                DisplayNode {
+                    id: node_id,
+                    node,
+                    sep,
+                }
+                .to_string()
+            })
+            .collect::<Vec<_>>();
         writeln!(f, "{{")?;
-        for (node_id, node) in self.nodes.iter_enumerated() {
-            writeln!(f, "\t{node_id}: {node},")?;
+        for line in pad_columns(&lines, sep) {
+            writeln!(f, "\t{line}")?;
         }
         write!(f, "}}")?;
         Ok(())
