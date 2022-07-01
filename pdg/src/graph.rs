@@ -203,13 +203,10 @@ impl Display for Node {
         } = self;
         let src = ShortOption(source.as_ref());
         let dest = ShortOption(dest.as_ref());
-        let bb = block.as_usize();
+        let bb = block;
         let stmt = statement_idx;
         let fn_ = function;
-        write!(
-            f,
-            "(fn {fn_}) {kind} {{ src: {src}, dest: {dest}, bb: {bb}, stmt: {stmt} }}"
-        )
+        write!(f, "(fn {fn_} @ {bb:?}[{stmt}]) {kind} {src} => {dest}")
     }
 }
 
