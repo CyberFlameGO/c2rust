@@ -274,7 +274,7 @@ impl Display for Graph {
             })
             .collect::<Vec<_>>();
         writeln!(f, "{{")?;
-        for line in pad_columns(&lines, sep) {
+        for line in pad_columns(&lines, sep, " ") {
             writeln!(f, "\t{line}")?;
         }
         write!(f, "}}")?;
